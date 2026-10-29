@@ -1,0 +1,15 @@
+# хөрвүүлсэн executable-ууд (make-ээр үүснэ)
+src/c/fcfs
+src/c/sjf
+src/c/priority
+src/c/rr
+src/c/priority_rr
+*.o
+*.dSYM/
+
+# OS / editor
+.DS_Store
+.vscode/
+tests/err.tmp
+tid_race_test
+tests/tid_race_test
