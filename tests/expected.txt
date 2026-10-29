@@ -1,0 +1,10 @@
+schedule.txt fcfs 10 44.00 63.00 44.00
+schedule.txt sjf 10 30.00 49.00 30.00
+schedule.txt priority 10 33.00 52.00 33.00
+schedule.txt rr 10 57.00 76.00 20.00
+schedule.txt rr 4 60.40 79.40 8.00
+schedule.txt priority_rr 10 35.00 54.00 30.00
+schedule.txt priority_rr 4 34.20 53.20 28.80
+schedule_ties.txt priority_rr 4 12.75 20.50 8.50
+schedule_ties.txt priority 10 13.25 21.00 13.25
+schedule_ties.txt sjf 10 8.00 15.75 8.00
