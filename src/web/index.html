@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IV-2-8 · CPU Scheduling Simulator</title>
+<title>IV-2-8 · CPU хуваарилалтын симулятор</title>
 <style>
 :root{--ink:#14213d;--mut:#5c677d;--paper:#f3f5f9;--card:#fff;--line:#dbe1ea;--acc:#2f5bea;--play:#e4572e;--bad:#b3261e;--ok:#18794e;--idle:#e8ebf0;color-scheme:light}
 *{box-sizing:border-box}
@@ -40,11 +40,17 @@ button.p{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:60
 .bar{position:absolute;top:2px;bottom:2px;border-radius:4px;color:#fff;font:600 11px/22px ui-monospace,Menlo,monospace;text-align:center;overflow:hidden;white-space:nowrap}
 .cpu .bar{line-height:26px;font-size:12px}
 .bar.w{top:9px;bottom:9px;border-radius:2px}
-.bar.idle{background:repeating-linear-gradient(135deg,var(--idle) 0 5px,#fff 5px 10px);color:var(--mut)}
+.bar.idle,.sw.idle{background:repeating-linear-gradient(135deg,var(--idle) 0 5px,#fff 5px 10px);color:var(--mut)}
 .gl{position:absolute;top:22px;bottom:0;width:1px;background:var(--line);pointer-events:none}
 .ph{position:absolute;top:0;bottom:0;width:2px;background:var(--play);pointer-events:none}
 .cap{font-size:12px;color:var(--mut);margin:6px 0 0}
-#leg,#info:empty{display:none}
+#info:empty{display:none}
+#leg{margin:0 0 8px}
+#leg-items{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:4px}
+#leg-items>span{display:inline-flex;align-items:center;gap:6px;overflow-wrap:anywhere}
+.sw{width:13px;height:13px;flex:0 0 13px;border:1px solid var(--line);border-radius:3px}
+.lane>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#code{max-height:480px;overflow:auto}
 #steps{flex:1;min-width:160px}
 .pill{border-left:4px solid var(--acc);background:#eef2fe;border-radius:4px 8px 8px 4px;padding:7px 12px;margin-bottom:8px;font:600 13px ui-monospace,Menlo,monospace}
 #code{margin:0;background:#fbfcfe;border:1px solid var(--line);border-radius:8px;font:13px/1.6 ui-monospace,Menlo,monospace;overflow-x:auto;padding:4px 0}
@@ -58,15 +64,15 @@ button.p{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:60
 </style>
 </head>
 <body>
-<header class="top"><h1>CPU Dispatch Board</h1>
-<p class="sub">F.CSM302 · БД1 · IV-2-8 · Scheduling Algorithms (OSC, 5-р бүлэг). Priority: их тоо = өндөр (1–10). Хугацаа ms.</p>
+<header class="top"><h1>CPU хуваарилалтын самбар</h1>
+<p class="sub">F.CSM302 · БД1 · IV-2-8 · Хуваарилалтын алгоритмууд (OSC, 5-р бүлэг). Эрэмбийн их тоо нь өндөр эрэмбэ. Хугацааг миллисекундээр хэмжинэ.</p>
 <div class="chips"><span id="iA"></span><span id="iT"></span><span><b id="iN"></b> процесс</span></div></header>
 <div class="layout">
 <aside>
 <section class="card"><h2>Тохиргоо</h2>
-<table id="pt"><thead><tr><th>Нэр</th><th>Arrival</th><th>Burst</th><th>Prio</th><th></th></tr></thead><tbody></tbody></table>
-<div class="row"><button id="add">+ Процесс</button><button data-ex="book">Номын жишээ</button><button data-ex="arr">Arrival-тай</button><button data-ex="rr">RR жишээ</button><button id="reset">Reset</button></div>
-<div class="row"><label>Алгоритм <select id="alg"></select></label><label>Quantum <input type="number" id="q" value="10" min="1"></label></div>
+<table id="pt"><thead><tr><th>Нэр</th><th>Ирэх цаг</th><th>Ажиллах хугацаа</th><th>Эрэмбэ</th><th></th></tr></thead><tbody></tbody></table>
+<div class="row"><button id="add">+ Процесс</button><button data-ex="book">Номын жишээ</button><button data-ex="arr">Өөр өөр ирэх цаг</button><button data-ex="rr">RR жишээ</button><button id="reset">Анхны төлөв</button></div>
+<div class="row"><label>Алгоритм <select id="alg"></select></label><label>Ээлжийн хугацаа (RR) <input type="number" id="q" value="10" min="1" max="1000" step="1"></label></div>
 <div class="row"><button class="p" id="run">Ажиллуулах</button><button id="cmp">Бүгдийг харьцуулах</button></div>
 <details style="margin-top:10px"><summary>schedule.txt оруулах</summary>
 <textarea id="imp" rows="6" style="width:100%;margin-top:6px;font:13px ui-monospace,Menlo,monospace" aria-label="schedule.txt">T1, 4, 20
@@ -74,36 +80,49 @@ T2, 2, 25
 T3, 3, 25
 T4, 3, 15
 T5, 10, 10</textarea>
-<div class="row"><button id="impb">Ачаалах (arrival = 0)</button></div></details>
+<div class="row"><button id="impb">Ачаалах (ирэх цаг = 0)</button></div></details>
 <details style="margin-top:8px"><summary>C-ийн гаралт оруулах (бодит ажиллуулалт)</summary>
 <textarea id="cout" rows="6" style="width:100%;margin-top:6px;font:12px ui-monospace,Menlo,monospace" aria-label="C гаралт" placeholder="./fcfs ../../tests/schedule.txt гэх мэт C програмын гаралтыг бүтнээр нь энд буулгана"></textarea>
-<div class="row"><button id="coutb">C-ийн гаралтаас Gantt зурах</button></div></details>
+<div class="row"><button id="coutb">C-ийн гаралтаас диаграмм зурах</button></div></details>
+<p class="cap">Вэб дээр 20 хүртэлх процессыг дүрслэнэ. C гаралт дахь бүх процессын ирэх цаг 0 байна.</p>
 <div id="errs"></div></section>
-<section class="card"><h2>Self-test</h2><button id="test">Тест ажиллуулах</button><ul id="tout"></ul></section>
+<section class="card"><h2>Өөрийгөө шалгах</h2><button id="test">Тест ажиллуулах</button><ul id="tout"></ul></section>
 </aside>
 <main>
 <section class="card" id="empty"><p>Зүүн талд процессуудаа тохируулаад <b>Ажиллуулах</b> дарна уу.</p></section>
-<section class="card" id="res" hidden><h2>Timeline</h2>
-<div class="wrap"><div id="gantt" role="img" aria-label="Gantt chart"></div></div>
-<p class="cap">Тод = CPU дээр ажиллав · бүдэг = ready queue-д хүлээв (waiting) · улаан шугам = одоогийн хугацаа</p><div id="leg"></div>
+<section class="card" id="res" hidden><h2>Гүйцэтгэлийн диаграмм</h2>
+<div id="leg" class="cap" aria-label="Өнгөний тайлбар"><b>Өнгөний тайлбар</b><div id="leg-items"></div><p class="cap">Тод өнгө нь CPU дээр ажилласан үе, бүдэг өнгө нь ажиллах ээлжээ хүлээсэн үе, улаан шугам нь сонгосон хугацаа.</p></div>
+<div class="wrap"><div id="gantt" role="img" aria-label="CPU хуваарилалтын Ганттын диаграмм"></div></div>
+
 <div class="row"><button id="first" aria-label="Эхлэл">⏮</button><button id="prev" aria-label="Өмнөх">◀</button><input type="range" id="steps" min="0" max="0" value="0" aria-label="Хугацаа"><button id="next" aria-label="Дараах">▶</button><button id="last" aria-label="Төгсгөл">⏭</button><button id="play">Тоглуулах</button></div>
 <p class="stat" id="info"></p>
-<h2 style="margin-top:14px">Үзүүлэлт</h2><div class="wrap"><table id="mt"></table></div></section>
-<section class="card" id="codec" hidden><h2 id="codeh">schedule() pseudo-code · одоо биелж буй мөр</h2><div class="pill" id="pill"></div><pre id="code"></pre><div class="sbar" id="sbar"></div></section>
+<h2 style="margin-top:14px">Үзүүлэлт</h2>
+<p class="cap">Процесс солигдсон тоо нь CPU дээр өөр процесс шууд залгаж ажилласан тохиолдлыг тоолно. Сул зогсолт тоолох дарааллыг тасална.</p><div class="wrap"><table id="mt"></table></div></section>
+<section class="card" id="codec" hidden><h2 id="codeh">Хуваарилалтын псевдокод</h2><div class="pill" id="pill"></div><pre id="code"></pre><div class="sbar" id="sbar"></div></section>
 <section class="card" id="cmpc" hidden><h2>Алгоритмуудын харьцуулалт</h2><div class="wrap"><table id="ct"></table></div></section>
 </main></div>
 <script>
 "use strict";
-const ALGS={fcfs:"FCFS",sjf:"SJF (nonpreemptive)",srtf:"SRTF (preemptive SJF)",prio:"Priority (nonpreemptive)",priop:"Priority (preemptive)",rr:"Round Robin",prrr:"Priority + Round Robin"};
+const ALGS={fcfs:"FCFS",sjf:"SJF (тасалдалгүй)",srtf:"SRTF (тасалдалтай SJF)",prio:"Priority (тасалдалгүй)",priop:"Priority (тасалдалтай)",rr:"Round Robin",prrr:"Priority + Round Robin"};
 const EX={
  book:{q:10,p:[["T1",0,20,4],["T2",0,25,2],["T3",0,25,3],["T4",0,15,3],["T5",0,10,10]]},
  arr:{q:4,p:[["P1",0,8,2],["P2",1,4,4],["P3",2,9,1],["P4",3,5,3]]},
  rr:{q:4,p:[["P1",0,24,3],["P2",0,3,3],["P3",0,3,3]]}
 };
-const MAXN=20,MAXB=1000;
+const MAXN=20,MAXB=1000,MAXA=10000;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const validArrival=a=>Number.isInteger(a)&&a>=0&&a<=MAXA;
+const validName=name=>name.length>0&&new TextEncoder().encode(name).length<=63&&!/[,\[\]\x00-\x1f\x7f]/.test(name)&&!name.startsWith("#");
+const inRange=(value,min,max)=>Number.isSafeInteger(value)&&value>=min&&value<=max;
 
-/* ---------- Simulation engine (tick = 1 ms) ---------- */
+/* ---------- Simulation engine (active ticks, compressed idle intervals) ---------- */
 function simulate(P,alg,q){
+  if(!P.length||P.length>MAXN||!Object.hasOwn(ALGS,alg)||!inRange(q,1,1000))throw new RangeError("Хуваарилалтын тохиргоо буруу байна.");
+  const unique=new Set();
+  for(const p of P){
+    if(!validName(p.name)||unique.has(p.name)||!validArrival(p.arrival)||!inRange(p.burst,1,MAXB)||!inRange(p.priority,1,10))throw new RangeError("Процессын оролт хязгаараас хэтэрсэн эсвэл нэр давхцсан байна.");
+    unique.add(p.name);
+  }
   const n=P.length,rem=P.map(p=>p.burst),start=Array(n).fill(-1),comp=Array(n).fill(0);
   const order=P.map((_,i)=>i).sort((a,b)=>P[a].arrival-P[b].arrival||a-b);
   let t=0,done=0,ai=0,cur=-1,ql=0;const ready=[],log=[];
@@ -126,9 +145,15 @@ function simulate(P,alg,q){
       else if(["prio","priop","prrr"].includes(alg))k=best(ready,i=>-P[i].priority);
       cur=ready.splice(k,1)[0];pk=cur;ql=q;if(start[cur]<0)start[cur]=t;
     }
-    log.push({run:cur,pr,pk,rem:cur>=0?rem[cur]:0,queue:ready.map(i=>P[i].name)});
+    if(cur<0){
+      const next=P[order[ai]].arrival;
+      log.push({from:t,end:next,run:-1,pr:-1,pk:-1,rem:0,queue:[]});
+      t=next;
+      continue;
+    }
+    log.push({from:t,end:t+1,run:cur,pr,pk,rem:rem[cur],queue:ready.map(i=>P[i].name)});
     t++;
-    if(cur>=0){rem[cur]--;ql--;if(rem[cur]===0){log[t-1].fin=true;comp[cur]=t;done++;cur=-1}}
+    rem[cur]--;ql--;if(rem[cur]===0){log[log.length-1].fin=true;comp[cur]=t;done++;cur=-1}
   }
   const rows=P.map((p,i)=>{const tat=comp[i]-p.arrival;return{...p,idx:i,start:start[i],comp:comp[i],tat,wait:tat-p.burst,resp:start[i]-p.arrival}});
   const avg=k=>rows.reduce((s,r)=>s+r[k],0)/n;
@@ -136,29 +161,50 @@ function simulate(P,alg,q){
 }
 function segsOf(log,upto){
   const s=[];
-  for(let t=0;t<upto;t++){const r=log[t].run;const l=s[s.length-1];
-    if(l&&l.run===r)l.end=t+1;else s.push({run:r,from:t,end:t+1})}
+  for(const event of log){
+    if(event.from>=upto)break;
+    const end=Math.min(event.end,upto),last=s[s.length-1];
+    if(last&&last.run===event.run&&last.end===event.from)last.end=end;
+    else s.push({run:event.run,from:event.from,end});
+  }
   return s;
+}
+function stepAt(log,time){
+  if(time<0)return null;
+  let lo=0,hi=log.length-1;
+  while(lo<=hi){
+    const mid=Math.floor((lo+hi)/2),event=log[mid];
+    if(time<event.from)hi=mid-1;
+    else if(time>=event.end)lo=mid+1;
+    else return {...event,rem:event.rem-(event.run<0?0:time-event.from),pk:time===event.from?event.pk:-1,pr:time===event.from?event.pr:-1,fin:!!event.fin&&time+1===event.end};
+  }
+  return null;
 }
 
 /* ---------- Input handling ---------- */
 const $=id=>document.getElementById(id),tb=$("pt").tBodies[0];
 function addRow(n="",a=0,b=1,p=1){
-  const tr=tb.insertRow();
-  tr.innerHTML=`<td><input class="nm" value="${n}" aria-label="Нэр"></td><td><input type="number" value="${a}" min="0" aria-label="Arrival"></td><td><input type="number" value="${b}" min="1" aria-label="Burst"></td><td><input type="number" value="${p}" min="1" max="10" aria-label="Priority"></td><td><button aria-label="Устгах">✕</button></td>`;
-  tr.querySelector("button").onclick=()=>tr.remove();
+  const tr=tb.insertRow(),cell=(tag,value,attrs={})=>{const td=tr.insertCell(),el=document.createElement(tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,v);el.value=value;td.append(el);return el};
+  cell("input",n,{class:"nm","aria-label":"Нэр"});
+  cell("input",a,{type:"number",min:"0",max:String(MAXA),step:"1","aria-label":"Ирэх цаг"});
+  cell("input",b,{type:"number",min:"1",max:String(MAXB),step:"1","aria-label":"Ажиллах хугацаа"});
+  cell("input",p,{type:"number",min:"1",max:"10",step:"1","aria-label":"Эрэмбэ"});
+  const del=tr.insertCell(),button=document.createElement("button");button.setAttribute("aria-label","Устгах");button.textContent="✕";del.append(button);
+  button.onclick=()=>{tr.remove();invalidate()};
 }
 function load(ex){tb.innerHTML="";ex.p.forEach(p=>addRow(...p));$("q").value=ex.q;hide()}
-function hide(){$("empty").hidden=false;$("codec").hidden=true;updInfo();$("res").hidden=true;$("cmpc").hidden=true;$("errs").innerHTML="";stop()}
+function invalidate(){hide()}
+function hide(){$("empty").hidden=false;$("codec").hidden=true;updInfo();$("res").hidden=true;$("cmpc").hidden=true;$("errs").innerHTML="";stop();SIM=null}
 function readInput(){
   const errs=[],P=[],names=new Set();
   [...tb.rows].forEach((tr,i)=>{
     const v=[...tr.querySelectorAll("input")].map(x=>x.value.trim());
     const name=v[0],a=Number(v[1]),b=Number(v[2]),p=Number(v[3]),L=`Мөр ${i+1}`;
-    if(!name)errs.push(`${L}: нэр хоосон байна.`);
+    if(!validName(name))errs.push(`${L}: нэр 1–63 UTF-8 байт байна. Таслал, дөрвөлжин хаалт, удирдлагын тэмдэгт болон эхний # зөвшөөрөхгүй.`);
     else if(names.has(name))errs.push(`${L}: "${name}" нэр давхцсан байна.`);
     names.add(name);
     if(v[1]===""||!Number.isInteger(a)||a<0)errs.push(`${L}: arrival нь 0 ба түүнээс их бүхэл тоо байх ёстой.`);
+    else if(!validArrival(a))errs.push(`${L}: arrival ${MAXA}-аас их байж болохгүй (хөтчийн тооцоог хязгаарлав).`);
     if(v[2]===""||!Number.isInteger(b)||b<1)errs.push(`${L}: burst нь 1 ба түүнээс их бүхэл тоо байх ёстой.`);
     else if(b>MAXB)errs.push(`${L}: burst ${MAXB}-аас их байж болохгүй.`);
     if(v[3]===""||!Number.isInteger(p)||p<1||p>10)errs.push(`${L}: priority нь 1–10 хоорондын бүхэл тоо байх ёстой.`);
@@ -167,10 +213,24 @@ function readInput(){
   if(!P.length)errs.push("Дор хаяж нэг процесс оруулна уу.");
   if(P.length>MAXN)errs.push(`Процессын тоо ${MAXN}-аас ихгүй байх ёстой.`);
   const q=Number($("q").value);
-  if(["rr","prrr"].includes($("alg").value)&&(!Number.isInteger(q)||q<1))errs.push("Quantum нь 1 ба түүнээс их бүхэл тоо байх ёстой (0 болон сөрөг утга хүчингүй).");
+  if(!inRange(q,1,1000))errs.push("Ээлжийн хугацаа 1–1000 хоорондын бүхэл тоо байна.");
   const e=$("errs");
-  e.innerHTML=errs.length?`<div class="err" role="alert">Оролтод алдаа байна:<ul>${errs.map(x=>`<li>${x}</li>`).join("")}</ul></div>`:"";
+  e.innerHTML=errs.length?`<div class="err" role="alert">Оролтод алдаа байна:<ul>${errs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
   return errs.length?null:{P,q};
+}
+function parseSchedule(text){
+  if(text.length>100_000)return{errs:["schedule.txt хэт том байна."]};
+  const errs=[],rows=[],names=new Set();
+  text.split(/\r?\n/).forEach((line,i)=>{
+    line=line.trim();if(!line||line.startsWith("#"))return;
+    const m=line.split(",").map(s=>s.trim());
+    if(m.length!==3||!validName(m[0])||!/^\d+$/.test(m[1])||!/^\d+$/.test(m[2])||!inRange(+m[1],1,10)||!inRange(+m[2],1,MAXB)){errs.push(`Мөр ${i+1}: name, priority (1–10), burst (1–1000) хэлбэр болон нэрийн хязгаарыг шалгана уу.`);return}
+    if(names.has(m[0])){errs.push(`Мөр ${i+1}: "${m[0]}" нэр давхцсан байна.`);return}
+    names.add(m[0]);rows.push([m[0],0,+m[2],+m[1]]);
+  });
+  if(!rows.length&&!errs.length)errs.push("Файл хоосон байна.");
+  if(rows.length>MAXN)errs.push(`Вэб дээр ${MAXN} хүртэлх процессыг импортолно.`);
+  return errs.length?{errs}:{rows};
 }
 
 /* ---------- Rendering ---------- */
@@ -178,18 +238,19 @@ let SIM=null,TM=null;
 const col=(i,a=1)=>`hsl(${(i*57+215)%360} 60% 45% / ${a})`;
 const f=x=>Number.isInteger(x)?x:x.toFixed(2);
 function show(){
+  hide();
   const inp=readInput();if(!inp)return;
   SIM=simulate(inp.P,$("alg").value,inp.q);SIM.P=inp.P;SIM.fromC=false;
   present();
 }
 function present(){
   $("res").hidden=false;$("empty").hidden=true;$("codec").hidden=false;updInfo();
-  $("codeh").textContent=SIM.fromC?"C программын бодит гаралт · одоо биелж буй мөр":"schedule() pseudo-code · одоо биелж буй мөр";
+  $("codeh").textContent=SIM.fromC?"C программын бодит гаралт · одоо биелж буй мөр":"schedule() псевдокод · одоо биелж буй мөр";
   if(SIM.fromC){$("iA").textContent="C-ийн гаралт";$("iT").textContent="Бодит ажиллуулалт";$("iN").textContent=SIM.P.length}
   const s=$("steps");s.max=SIM.total;s.value=SIM.total;
-  $("leg").innerHTML=SIM.P.map((p,i)=>`<span><span class="sw" style="background:${col(i)}"></span>${p.name}</span>`).join("")+`<span><span class="sw" style="background:var(--idle)"></span>idle</span>`;
-  $("mt").innerHTML=`<tr><th>Процесс</th><th class="n">Arrival</th><th class="n">Burst</th><th class="n">Priority</th><th class="n">Completion</th><th class="n">Waiting</th><th class="n">Turnaround</th><th class="n">Response</th></tr>`+
-   SIM.rows.map(r=>`<tr><td>${r.name}</td><td class="n">${r.arrival}</td><td class="n">${r.burst}</td><td class="n">${r.priority}</td><td class="n">${r.comp}</td><td class="n">${r.wait}</td><td class="n">${r.tat}</td><td class="n">${r.resp}</td></tr>`).join("")+
+  $("leg-items").innerHTML=SIM.P.map((p,i)=>`<span><span class="sw" style="background:${col(i)}"></span>${esc(p.name)}</span>`).join("")+`<span><span class="sw idle"></span>Сул зогсолт</span>`;
+  $("mt").innerHTML=`<tr><th>Процесс</th><th class="n">Ирэх цаг</th><th class="n">Ажиллах хугацаа</th><th class="n">Эрэмбэ</th><th class="n">Дуусах цаг</th><th class="n">Хүлээх</th><th class="n">Нийт</th><th class="n">Хариу өгөх</th></tr>`+
+   SIM.rows.map(r=>`<tr><td>${esc(r.name)}</td><td class="n">${r.arrival}</td><td class="n">${r.burst}</td><td class="n">${r.priority}</td><td class="n">${r.comp}</td><td class="n">${r.wait}</td><td class="n">${r.tat}</td><td class="n">${r.resp}</td></tr>`).join("")+
    `<tr><th>Дундаж</th><td></td><td></td><td></td><td></td><th class="n">${f(SIM.avg.wait)}</th><th class="n">${f(SIM.avg.tat)}</th><th class="n">${f(SIM.avg.resp)}</th></tr>`;
   draw(SIM.total);
 }
@@ -199,20 +260,21 @@ function draw(t){
   let g="",ax="";
   for(let k=0;k<=T;k+=st){g+=`<i class="gl" style="left:${X(k)}"></i>`;ax+=`<span class="tk" style="left:${pc(k)}">${k}</span>`}
   let h=g+`<div class="lane ax"><b></b><div class="trk" style="border:0">${ax}</div></div><div class="lane cpu"><b>CPU</b><div class="trk">`+
-   segs.map(s=>{const d=s.run<0;return `<div class="bar${d?" idle":""}" style="left:${pc(s.from)};width:${pc(s.end-s.from)};${d?"":"background:"+col(s.run)}" title="${d?"idle":SIM.P[s.run].name}: ${s.from}–${s.end}">${d?"":SIM.P[s.run].name}</div>`}).join("")+`</div></div>`;
+   segs.map(s=>{const d=s.run<0,name=d?"idle":SIM.P[s.run].name;return `<div class="bar${d?" idle":""}" style="left:${pc(s.from)};width:${pc(s.end-s.from)};${d?"":"background:"+col(s.run)}" title="${esc(name)}: ${s.from}–${s.end}">${d?"":esc(name)}</div>`}).join("")+`</div></div>`;
   SIM.P.forEach((p,i)=>{
     const e=Math.min(SIM.rows[i].comp,t);
-    h+=`<div class="lane"><b>${p.name}</b><div class="trk">`+(t>p.arrival?`<div class="bar w" style="left:${pc(p.arrival)};width:${pc(e-p.arrival)};background:${col(i,.22)}"></div>`:"")+
+    h+=`<div class="lane"><b>${esc(p.name)}</b><div class="trk">`+(t>p.arrival?`<div class="bar w" style="left:${pc(p.arrival)};width:${pc(e-p.arrival)};background:${col(i,.22)}"></div>`:"")+
      segs.filter(s=>s.run===i).map(s=>`<div class="bar" style="left:${pc(s.from)};width:${pc(s.end-s.from)};background:${col(i)}"></div>`).join("")+`</div></div>`;
   });
   $("gantt").innerHTML=h+`<i class="ph" style="left:${X(t)}"></i>`;
   $("steps").value=t;
-  ui(t,t>0?SIM.log[t-1]:null);
+  ui(t,stepAt(SIM.log,t-1));
 }
 function stop(){if(TM){clearInterval(TM);TM=null;$("play").textContent="Тоглуулах"}}
 function compare(){
+  hide();
   const inp=readInput();if(!inp)return;
-  $("ct").innerHTML=`<tr><th>Алгоритм</th><th class="n">Avg waiting</th><th class="n">Avg turnaround</th><th class="n">Avg response</th></tr>`+
+  $("ct").innerHTML=`<tr><th>Алгоритм</th><th class="n">Дундаж хүлээх</th><th class="n">Дундаж нийт</th><th class="n">Дундаж хариу өгөх</th></tr>`+
    Object.keys(ALGS).map(k=>{const r=simulate(inp.P,k,inp.q).avg;return `<tr><td>${ALGS[k]}</td><td class="n">${f(r.wait)}</td><td class="n">${f(r.tat)}</td><td class="n">${f(r.resp)}</td></tr>`}).join("");
   $("cmpc").hidden=false;
 }
@@ -220,7 +282,7 @@ function compare(){
 
 const PRE={fcfs:"0 /* nonpreemptive */",sjf:"0 /* nonpreemptive */",prio:"0 /* nonpreemptive */",srtf:"has_shorter_remaining(ready, cur)",priop:"has_higher_priority(ready, cur)",rr:"quantum_expired(cur)",prrr:"quantum_expired(cur) || has_higher_priority(ready, cur)"};
 const PICK={fcfs:"pick_first",sjf:"pick_shortest_burst",srtf:"pick_min_remaining",prio:"pick_highest_priority",priop:"pick_highest_priority",rr:"pick_first",prrr:"pick_highest_priority_rr"};
-function codeLines(a){return["void schedule(task *ready[], int n) {","  while (done < n) {","    add_arrivals(t, ready);","    if (cur && "+PRE[a]+")","      enqueue(ready, cur), cur = NULL;","    if (!cur) cur = "+PICK[a]+"(ready);","    if (!cur) { idle(); t++; continue; }","    run(cur, 1); t++;","    if (cur->remaining == 0) finish(cur);","  }","}"]}
+function codeLines(a){return["void schedule(task *ready[], int n) {","  while (done < n) {","    add_arrivals(t, ready);","    if (cur && "+PRE[a]+")","      enqueue(ready, cur), cur = NULL;","    if (!cur) cur = "+PICK[a]+"(ready);","    if (!cur) { t = next_arrival(); continue; }","    run(cur, 1); t++;","    if (cur->remaining == 0) finish(cur);","  }","}"]}
 function renderCode(on){
   $("code").innerHTML=codeLines($("alg").value).map((l,i)=>`<div class="ln${i+1===on?" on":""}"><em>${i+1}</em><span>${l.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\b(void|while|if|continue)\b/g,'<span class="kw">$1</span>').replace(/(\/\*.*\*\/)/,'<span class="cm">$1</span>')}</span></div>`).join("");
 }
@@ -228,57 +290,99 @@ function ui(t,L){
   if(SIM.fromC){uiC(t,L);return}
   const nm=i=>SIM.P[i].name;let ln=0,msg="Эхлэхээс өмнө (t = 0)";
   if(L){
-    if(L.fin){ln=9;msg=`DONE ${nm(L.run)} → completion = ${t}`}
-    else if(L.pr>=0){ln=5;msg=`PREEMPT ${nm(L.pr)} → ready queue`+(L.run>=0?`, dispatch ${nm(L.run)}`:"")}
-    else if(L.pk>=0){ln=6;msg=`PICK ${nm(L.pk)} ← ${ALGS[$("alg").value]}`}
-    else if(L.run<0){ln=7;msg="IDLE: ready queue хоосон"}
-    else{ln=8;msg=`RUN ${nm(L.run)} (үлдсэн ${L.rem} → ${L.rem-1})`}
+    if(L.fin){ln=9;msg=`ДУУССАН ${nm(L.run)} · дуусах цаг = ${t}`}
+    else if(L.pr>=0){ln=5;msg=`ТАСАЛСАН ${nm(L.pr)} → хүлээх дараалал`+(L.run>=0?`, сонгосон ${nm(L.run)}`:"")}
+    else if(L.pk>=0){ln=6;msg=`СОНГОСОН ${nm(L.pk)} ← ${ALGS[$("alg").value]}`}
+    else if(L.run<0){ln=7;msg="СУЛ ЗОГСОЛТ: хүлээх дараалал хоосон"}
+    else{ln=8;msg=`АЖИЛЛАЖ БУЙ ${nm(L.run)} (үлдсэн ${L.rem} → ${L.rem-1})`}
   }
   renderCode(ln);$("pill").textContent=msg;
-  const sw=Math.max(0,segsOf(SIM.log,t).filter(s=>s.run>=0).length-1);
-  $("sbar").innerHTML=`<span>t = ${t} ms</span><span>Context switches ${sw}</span><span>Finished ${SIM.rows.filter(r=>r.comp<=t).length}/${SIM.rows.length}</span><span>Queue [${L?L.queue.join(", "):""}]</span>`;
+  const sw=countSwitches(segsOf(SIM.log,t));
+  $("sbar").innerHTML=`<span>t = ${t} ms</span><span>Процесс солигдсон ${sw}</span><span>Дууссан ${SIM.rows.filter(r=>r.comp<=t).length}/${SIM.rows.length}</span><span>Хүлээж буй [${L?L.queue.map(esc).join(", "):""}]</span>`;
   $("info").textContent="";
 }
-function updInfo(){const a=$("alg").value;$("iA").textContent=ALGS[a];$("iT").textContent=["srtf","priop","rr","prrr"].includes(a)?"Preemptive":"Nonpreemptive";$("iN").textContent=tb.rows.length}
+function countSwitches(segs){let last=-1,count=0;for(const s of segs){if(s.run<0){last=-1;continue}if(last>=0&&last!==s.run)count++;last=s.run}return count}
+function updInfo(){const a=$("alg").value;$("iA").textContent=ALGS[a];$("iT").textContent=["srtf","priop","rr","prrr"].includes(a)?"Тасалдалтай":"Тасалдалгүй";$("iN").textContent=tb.rows.length}
 
 
 /* ---------- Real C output -> Gantt (UI connected to the C program) ---------- */
 function parseC(text){
-  const re=/Running task = \[([^\]]+)\] \[(\d+)\] \[(\d+)\] for (\d+) units\.\s*\(t = (\d+)\.\.(\d+)\)/g;
-  const segs=[],lines=[];let m;
-  while((m=re.exec(text))){segs.push({name:m[1],pri:+m[2],rem:+m[3],len:+m[4],from:+m[5],end:+m[6]});lines.push(m[0])}
-  if(!segs.length)return{errs:['"Running task = [T1] [4] [20] for 20 units.  (t = 0..20)" хэлбэртэй мөр олдсонгүй. C програмын гаралтыг бүтнээр нь буулгана уу (жишээ: ./fcfs ../../tests/schedule.txt).']};
-  const errs=[];let prev=0;
-  segs.forEach((s,i)=>{if(s.from!==prev||s.end-s.from!==s.len)errs.push(`Мөр ${i+1}: хугацаа тасалдсан эсвэл зөрүүтэй (t = ${s.from}..${s.end}).`);prev=s.end});
-  const names=[],info={};
-  segs.forEach(s=>{if(!info[s.name]){info[s.name]={priority:s.pri,burst:s.rem,done:0};names.push(s.name)}info[s.name].done+=s.len});
-  names.forEach(n=>{if(info[n].done!==info[n].burst)errs.push(`${n}: ажилласан нийт хугацаа (${info[n].done}) burst (${info[n].burst})-тэй тэнцэхгүй. Гаралт бүрэн биш байж магадгүй.`)});
+  if(text.length>2_000_000)return{errs:["C-ийн гаралт 2 MB-аас их байж болохгүй."]};
+  const re=/^Running task = \[([^\]]+)\] \[(\d+)\] \[(\d+)\] for (\d+) units\.\s*\(t = (\d+)\.\.(\d+)\)$/;
+  const segs=[],lines=[],errs=[],info=new Map(),averages=new Map(),table=[];
+  let prev=0,summary=null,hasTable=false;
+  for(const [lineNo,raw] of text.split(/\r?\n/).entries()){
+    const line=raw.trim();let m;
+    if(hasTable&&(m=/^(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$/.exec(line))){
+      table.push({name:m[1].trim(),values:m.slice(2).map(Number)});continue;
+    }
+    if(line.startsWith("Running task")){
+      m=re.exec(line);
+      if(!m){errs.push(`Мөр ${lineNo+1}: C ажиллуулах мөрийн хэлбэр буруу.`);continue}
+      const s={name:m[1],pri:+m[2],rem:+m[3],len:+m[4],from:+m[5],end:+m[6]};
+      if(!validName(s.name)||s.name!==s.name.trim()||!inRange(s.pri,1,10)||!inRange(s.rem,1,MAXB)||!inRange(s.len,1,MAXB)||!inRange(s.from,0,MAXN*MAXB)||!inRange(s.end,1,MAXN*MAXB)||s.from!==prev||s.end-s.from!==s.len){errs.push(`Мөр ${lineNo+1}: нэр, утгын хязгаар эсвэл хугацааны дараалал буруу.`);continue}
+      if(!info.has(s.name))info.set(s.name,{priority:s.pri,burst:s.rem,done:0});
+      if(info.size>MAXN)return{errs:[`C импортоор ${MAXN} хүртэлх процессыг дүрслэнэ.`]};
+      const p=info.get(s.name);
+      if(p.priority!==s.pri||p.burst-p.done!==s.rem||s.len>s.rem)errs.push(`Мөр ${lineNo+1}: ${s.name} процессын эрэмбэ эсвэл үлдсэн хугацаа зөрүүтэй.`);
+      p.done+=s.len;prev=s.end;segs.push(s);lines.push(line);
+    }else if(line.startsWith("Schedule summary")){
+      m=/^Schedule summary: tasks=(\d+) end=(\d+)$/.exec(line);
+      if(!m||summary)errs.push("Schedule summary мөр буруу эсвэл давхардсан.");
+      else summary={tasks:+m[1],end:+m[2]};
+    }else if(line.startsWith("Average")){
+      m=/^Average (waiting|turnaround|response) time\s*=\s*(\d+(?:\.\d+)?)$/.exec(line);
+      if(!m||averages.has(m[1])||!Number.isFinite(+m[2]))errs.push("Дундаж үзүүлэлтийн мөр буруу эсвэл давхардсан.");
+      else averages.set(m[1],+m[2]);
+    }else if(/^Task\s+tid\s+Pri\s+Burst\s+Waiting\s+Turnaround\s+Response$/.test(line)){
+      if(hasTable)errs.push("Үзүүлэлтийн хүснэгт давхардсан.");hasTable=true;
+    }else if(hasTable&&line){
+      errs.push(`Мөр ${lineNo+1}: хүснэгтийн мөрийн хэлбэр буруу.`);
+    }
+  }
+  if(!segs.length)errs.push('"Running task = [T1] [4] [20] for 20 units.  (t = 0..20)" хэлбэртэй мөр олдсонгүй. C програмын гаралтыг бүтнээр нь буулгана уу.');
+  for(const [name,p] of info)if(p.done!==p.burst)errs.push(`${name}: ажилласан нийт хугацаа burst-тэй тэнцэхгүй. Гаралт бүрэн биш байна.`);
+  if(summary&&(!inRange(summary.tasks,1,MAXN)||!inRange(summary.end,1,MAXN*MAXB)||summary.tasks!==info.size||summary.end!==prev))errs.push("Schedule summary дахь процессын тоо эсвэл төгсөх цаг зөрүүтэй. Гаралт таслагдсан байж болно.");
+  if(averages.size!==0&&averages.size!==3)errs.push("Дундаж waiting, turnaround, response гурван мөрийг бүтнээр нь оруулна уу.");
   if(errs.length)return{errs};
-  const P=names.map(n=>({name:n,arrival:0,burst:info[n].burst,priority:info[n].priority})),idx={};
-  names.forEach((n,i)=>idx[n]=i);
-  const rem=P.map(p=>p.burst),first=Array(P.length).fill(-1),comp=Array(P.length).fill(0),log=[],segOf=[];
-  segs.forEach((s,k)=>{const i=idx[s.name];if(first[i]<0)first[i]=s.from;
-    for(let t=s.from;t<s.end;t++){
-      const queue=P.filter((_,j)=>j!==i&&rem[j]>0).map(p=>p.name),r=rem[i];rem[i]--;
-      const fin=rem[i]===0;if(fin)comp[i]=t+1;
-      log.push({run:i,pr:-1,pk:t===s.from?i:-1,rem:r,fin,queue});segOf.push(k)}});
+  const P=[...info].map(([name,p])=>({name,arrival:0,burst:p.burst,priority:p.priority})),idx=new Map(P.map((p,i)=>[p.name,i]));
+  const rem=P.map(p=>p.burst),first=Array(P.length).fill(-1),comp=Array(P.length).fill(0),log=[];
+  segs.forEach((s,k)=>{const i=idx.get(s.name);if(first[i]<0)first[i]=s.from;
+    const queue=P.filter((_,j)=>j!==i&&rem[j]>0).map(p=>p.name);
+    rem[i]-=s.len;if(rem[i]===0)comp[i]=s.end;
+    log.push({from:s.from,end:s.end,run:i,pr:-1,pk:i,rem:s.rem,fin:rem[i]===0,queue,sourceLine:k});
+  });
   const rows=P.map((p,i)=>({...p,idx:i,start:first[i],comp:comp[i],tat:comp[i],wait:comp[i]-p.burst,resp:first[i]}));
   const avg=k=>rows.reduce((a,r)=>a+r[k],0)/rows.length;
-  return{sim:{P,log,rows,total:prev,avg:{wait:avg("wait"),tat:avg("tat"),resp:avg("resp")},fromC:true,lines,segOf}};
+  const computed={wait:avg("wait"),tat:avg("tat"),resp:avg("resp")};
+  for(const [key,column] of [["waiting","wait"],["turnaround","tat"],["response","resp"]])if(averages.has(key)&&Math.abs(averages.get(key)-computed[column])>0.00500001)errs.push(`Average ${key} нь диаграммаас тооцсон утгатай зөрүүтэй.`);
+  if(hasTable){
+    const seen=new Set(),tids=new Set();
+    for(const row of table){
+      const expected=rows[idx.get(row.name)], [tid,pri,burst,wait,tat,resp]=row.values;
+      if(!expected||seen.has(row.name)||!inRange(tid,1,1000)||tids.has(tid)||row.values.some(v=>!Number.isSafeInteger(v))||[pri,burst,wait,tat,resp].some((v,i)=>v!==[expected.priority,expected.burst,expected.wait,expected.tat,expected.resp][i]))errs.push(`${row.name}: C хүснэгтийн мөр диаграммтай зөрүүтэй.`);
+      seen.add(row.name);tids.add(tid);
+    }
+    if(seen.size!==P.length)errs.push("C хүснэгтэд процессын мөр дутуу эсвэл илүү байна.");
+  }
+  if(errs.length)return{errs};
+  const warnings=summary?[]:["Хуучин C гаралт: Schedule summary байхгүй тул бүхэл процессын мөр бүрэн эсэхийг батлах боломжгүй. Шинэ C програмаас гаралтыг бүтнээр нь хуулна уу."];
+  return{sim:{P,log,rows,total:prev,avg:computed,fromC:true,lines,warnings}};
 }
 function showC(){
+  hide();
   const r=parseC($("cout").value);
-  if(r.errs){$("errs").innerHTML=`<div class="err" role="alert">C-ийн гаралтыг уншиж чадсангүй:<ul>${r.errs.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;return}
+  if(r.errs){$("errs").innerHTML=`<div class="err" role="alert">C-ийн гаралтыг уншиж чадсангүй:<ul>${r.errs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`;return}
   $("errs").innerHTML="";stop();SIM=r.sim;present();
 }
 function uiC(t,L){
-  const nm=i=>SIM.P[i].name,k=t>0?SIM.segOf[t-1]:-1;
+  const nm=i=>SIM.P[i].name,k=L?L.sourceLine:-1;
   let msg="Эхлэхээс өмнө (t = 0)";
-  if(L)msg=(L.fin?"DONE ":L.pk>=0?"DISPATCH ":"RUN ")+nm(L.run)+` · C-гаралтын ${k+1}-р мөр`+(L.fin?` · completion = ${t}`:"");
+  if(L)msg=(L.fin?"ДУУССАН ":L.pk>=0?"СОНГОСОН ":"АЖИЛЛАЖ БУЙ ")+nm(L.run)+` · C-гаралтын ${k+1}-р мөр`+(L.fin?` · дуусах цаг = ${t}`:"");
   $("code").innerHTML=SIM.lines.map((l,i)=>`<div class="ln${i===k?" on":""}"><em>${i+1}</em><span>${l.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</span></div>`).join("");
   $("pill").textContent=msg;
-  $("sbar").innerHTML=`<span>t = ${t} ms</span><span>Context switches ${Math.max(0,k)}</span><span>Finished ${SIM.rows.filter(r=>r.comp<=t).length}/${SIM.rows.length}</span><span>Хүлээж буй [${L?L.queue.join(", "):""}]</span>`;
-  $("info").textContent="";
+  $("sbar").innerHTML=`<span>t = ${t} ms</span><span>Процесс солигдсон ${countSwitches(segsOf(SIM.log,t))}</span><span>Дууссан ${SIM.rows.filter(r=>r.comp<=t).length}/${SIM.rows.length}</span><span>Хүлээж буй [${L?L.queue.map(esc).join(", "):""}]</span>`;
+  $("info").textContent=(SIM.warnings||[]).join(" ");
 }
 const CS={
 fcfs:`Running task = [T1] [4] [20] for 20 units.  (t = 0..20)
@@ -313,30 +417,32 @@ function runTests(){
    ["C-гаралт (Priority+RR) уншиж: avg waiting = 35, avg response = 30",()=>{const r=parseC(CS.prrr).sim;return r&&r.avg.wait===35&&r.avg.resp===30}],
    ["Таслагдсан C-гаралтыг татгалзана",()=>{const r=parseC(CS.fcfs.split("\n").filter((_,i)=>i!==2).join("\n"));return !!r.errs}],
    ["Idle: arrival=3 burst=2 → эхний хэсэг idle, completion=5, waiting=0",()=>{const s=simulate(mk([["A",3,2,1]]),"fcfs",1);return s.log[0].run===-1&&s.rows[0].comp===5&&s.rows[0].wait===0}],
-   ["Бүх алгоритмд Σ(ажилласан хугацаа) = Σ burst",()=>Object.keys(ALGS).every(k=>{const P=mk(EX.arr.p),s=simulate(P,k,3);return s.log.filter(x=>x.run>=0).length===P.reduce((a,p)=>a+p.burst,0)})]
+   ["Бүх алгоритмд Σ(ажилласан хугацаа) = Σ burst",()=>Object.keys(ALGS).every(k=>{const P=mk(EX.arr.p),s=simulate(P,k,3);return s.log.filter(x=>x.run>=0).length===P.reduce((a,p)=>a+p.burst,0)})],
+   [`Arrival 0–${MAXA} зөвшөөрч, дээд хязгаараас хэтрэхийг хориглоно`,()=>validArrival(0)&&validArrival(MAXA)&&!validArrival(MAXA+1)],
+   ["Нэрийн тусгай тэмдэгтийг текстээр дүрслэнэ",()=>esc('A & "B"')==='A &amp; &quot;B&quot;'],
+   ["Context switch зөвхөн CPU-ийн идэвхтэй task солигдоход нэмэгдэнэ",()=>countSwitches([{run:0},{run:0},{run:1},{run:-1},{run:1}])===1]
   ];
   $("tout").innerHTML=T.map(([n,fn])=>{let ok=false;try{ok=fn()}catch(e){}return `<li class="${ok?"pass":"fail"}">${ok?"PASS":"FAIL"} — ${n}</li>`}).join("");
 }
 
 /* ---------- Wiring ---------- */
 $("alg").innerHTML=Object.entries(ALGS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
-$("alg").onchange=()=>{$("q").disabled=!["rr","prrr"].includes($("alg").value);hide()};
+$("alg").onchange=()=>{$("q").disabled=!["rr","prrr"].includes($("alg").value);if($("q").disabled&&!inRange(Number($("q").value),1,1000))$("q").value=10;hide()};
 $("q").disabled=true;
-$("add").onclick=()=>{addRow("P"+(tb.rows.length+1),0,1,1);updInfo()};
+tb.addEventListener("input",invalidate);
+$("q").addEventListener("input",invalidate);
+$("cout").addEventListener("input",invalidate);
+$("imp").addEventListener("input",invalidate);
+$("add").onclick=()=>{if(tb.rows.length>=MAXN)return;const used=new Set([...tb.rows].map(row=>row.querySelector(".nm").value.trim()));let n=1;while(used.has("P"+n))n++;addRow("P"+n,0,1,1);updInfo();invalidate()};
 document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>load(EX[b.dataset.ex]));
-$("reset").onclick=()=>{load(EX.book);$("alg").value="fcfs";$("q").disabled=true};
+$("reset").onclick=()=>{load(EX.book);$("alg").value="fcfs";$("q").disabled=true;updInfo()};
 $("run").onclick=()=>{stop();show()};
 $("cmp").onclick=compare;
 $("test").onclick=runTests;
 $("coutb").onclick=showC;
 $("impb").onclick=()=>{
-  const errs=[],rows=[];
-  $("imp").value.split("\n").forEach((l,i)=>{l=l.trim();if(!l||l[0]==="#")return;
-    const m=l.split(",").map(x=>x.trim());
-    if(m.length!==3||!m[0]||!/^\d+$/.test(m[1])||!/^\d+$/.test(m[2])){errs.push(`Мөр ${i+1}: "name, priority, burst" хэлбэртэй байх ёстой.`);return}
-    rows.push([m[0],0,+m[2],+m[1]])});
-  if(!rows.length&&!errs.length)errs.push("Файл хоосон байна.");
-  if(errs.length){$("errs").innerHTML=`<div class="err" role="alert">Импорт амжилтгүй:<ul>${errs.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;return}
+  hide();const {errs,rows}=parseSchedule($("imp").value);
+  if(errs){$("errs").innerHTML=`<div class="err" role="alert">Импорт амжилтгүй:<ul>${errs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`;return}
   load({q:+$("q").value||10,p:rows});
 };
 $("steps").oninput=e=>{stop();draw(+e.target.value)};
