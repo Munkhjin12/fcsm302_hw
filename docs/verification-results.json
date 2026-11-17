@@ -1,0 +1,400 @@
+{
+  "parityCases": 133,
+  "quantumTable": [
+    {
+      "q": 1,
+      "rr": {
+        "wait": 59.4,
+        "response": 2,
+        "switches": 94
+      },
+      "priorityRr": {
+        "wait": 34,
+        "response": 28.2,
+        "switches": 33
+      }
+    },
+    {
+      "q": 2,
+      "rr": {
+        "wait": 59.6,
+        "response": 4,
+        "switches": 48
+      },
+      "priorityRr": {
+        "wait": 34.2,
+        "response": 28.4,
+        "switches": 19
+      }
+    },
+    {
+      "q": 3,
+      "rr": {
+        "wait": 60.6,
+        "response": 6,
+        "switches": 33
+      },
+      "priorityRr": {
+        "wait": 34,
+        "response": 28.6,
+        "switches": 13
+      }
+    },
+    {
+      "q": 4,
+      "rr": {
+        "wait": 60.4,
+        "response": 8,
+        "switches": 25
+      },
+      "priorityRr": {
+        "wait": 34.2,
+        "response": 28.8,
+        "switches": 11
+      }
+    },
+    {
+      "q": 5,
+      "rr": {
+        "wait": 57,
+        "response": 10,
+        "switches": 18
+      },
+      "priorityRr": {
+        "wait": 34,
+        "response": 29,
+        "switches": 9
+      }
+    },
+    {
+      "q": 6,
+      "rr": {
+        "wait": 62.4,
+        "response": 12,
+        "switches": 18
+      },
+      "priorityRr": {
+        "wait": 34.6,
+        "response": 29.2,
+        "switches": 9
+      }
+    },
+    {
+      "q": 7,
+      "rr": {
+        "wait": 63.2,
+        "response": 14,
+        "switches": 15
+      },
+      "priorityRr": {
+        "wait": 35.2,
+        "response": 29.4,
+        "switches": 9
+      }
+    },
+    {
+      "q": 8,
+      "rr": {
+        "wait": 63,
+        "response": 16,
+        "switches": 14
+      },
+      "priorityRr": {
+        "wait": 34.2,
+        "response": 29.6,
+        "switches": 7
+      }
+    },
+    {
+      "q": 9,
+      "rr": {
+        "wait": 65.2,
+        "response": 18,
+        "switches": 12
+      },
+      "priorityRr": {
+        "wait": 34.6,
+        "response": 29.8,
+        "switches": 7
+      }
+    },
+    {
+      "q": 10,
+      "rr": {
+        "wait": 57,
+        "response": 20,
+        "switches": 10
+      },
+      "priorityRr": {
+        "wait": 35,
+        "response": 30,
+        "switches": 7
+      }
+    },
+    {
+      "q": 11,
+      "rr": {
+        "wait": 59.6,
+        "response": 22,
+        "switches": 10
+      },
+      "priorityRr": {
+        "wait": 35.4,
+        "response": 30.2,
+        "switches": 7
+      }
+    },
+    {
+      "q": 12,
+      "rr": {
+        "wait": 62.2,
+        "response": 24,
+        "switches": 10
+      },
+      "priorityRr": {
+        "wait": 35.8,
+        "response": 30.4,
+        "switches": 7
+      }
+    },
+    {
+      "q": 13,
+      "rr": {
+        "wait": 61,
+        "response": 26,
+        "switches": 8
+      },
+      "priorityRr": {
+        "wait": 35.6,
+        "response": 30.6,
+        "switches": 6
+      }
+    },
+    {
+      "q": 14,
+      "rr": {
+        "wait": 63,
+        "response": 28,
+        "switches": 8
+      },
+      "priorityRr": {
+        "wait": 35.8,
+        "response": 30.8,
+        "switches": 6
+      }
+    },
+    {
+      "q": 15,
+      "rr": {
+        "wait": 58,
+        "response": 30,
+        "switches": 7
+      },
+      "priorityRr": {
+        "wait": 34,
+        "response": 31,
+        "switches": 5
+      }
+    },
+    {
+      "q": 16,
+      "rr": {
+        "wait": 59.8,
+        "response": 31.8,
+        "switches": 7
+      },
+      "priorityRr": {
+        "wait": 34.2,
+        "response": 31.2,
+        "switches": 5
+      }
+    },
+    {
+      "q": 17,
+      "rr": {
+        "wait": 61.6,
+        "response": 33.6,
+        "switches": 7
+      },
+      "priorityRr": {
+        "wait": 34.4,
+        "response": 31.4,
+        "switches": 5
+      }
+    },
+    {
+      "q": 18,
+      "rr": {
+        "wait": 63.4,
+        "response": 35.4,
+        "switches": 7
+      },
+      "priorityRr": {
+        "wait": 34.6,
+        "response": 31.6,
+        "switches": 5
+      }
+    },
+    {
+      "q": 19,
+      "rr": {
+        "wait": 65.2,
+        "response": 37.2,
+        "switches": 7
+      },
+      "priorityRr": {
+        "wait": 34.8,
+        "response": 31.8,
+        "switches": 5
+      }
+    },
+    {
+      "q": 20,
+      "rr": {
+        "wait": 54,
+        "response": 39,
+        "switches": 6
+      },
+      "priorityRr": {
+        "wait": 35,
+        "response": 32,
+        "switches": 5
+      }
+    },
+    {
+      "q": 21,
+      "rr": {
+        "wait": 55,
+        "response": 40,
+        "switches": 6
+      },
+      "priorityRr": {
+        "wait": 35.2,
+        "response": 32.2,
+        "switches": 5
+      }
+    },
+    {
+      "q": 22,
+      "rr": {
+        "wait": 56,
+        "response": 41,
+        "switches": 6
+      },
+      "priorityRr": {
+        "wait": 35.4,
+        "response": 32.4,
+        "switches": 5
+      }
+    },
+    {
+      "q": 23,
+      "rr": {
+        "wait": 57,
+        "response": 42,
+        "switches": 6
+      },
+      "priorityRr": {
+        "wait": 35.6,
+        "response": 32.6,
+        "switches": 5
+      }
+    },
+    {
+      "q": 24,
+      "rr": {
+        "wait": 58,
+        "response": 43,
+        "switches": 6
+      },
+      "priorityRr": {
+        "wait": 35.8,
+        "response": 32.8,
+        "switches": 5
+      }
+    },
+    {
+      "q": 25,
+      "rr": {
+        "wait": 44,
+        "response": 44,
+        "switches": 4
+      },
+      "priorityRr": {
+        "wait": 33,
+        "response": 33,
+        "switches": 4
+      }
+    },
+    {
+      "q": 26,
+      "rr": {
+        "wait": 44,
+        "response": 44,
+        "switches": 4
+      },
+      "priorityRr": {
+        "wait": 33,
+        "response": 33,
+        "switches": 4
+      }
+    },
+    {
+      "q": 27,
+      "rr": {
+        "wait": 44,
+        "response": 44,
+        "switches": 4
+      },
+      "priorityRr": {
+        "wait": 33,
+        "response": 33,
+        "switches": 4
+      }
+    },
+    {
+      "q": 28,
+      "rr": {
+        "wait": 44,
+        "response": 44,
+        "switches": 4
+      },
+      "priorityRr": {
+        "wait": 33,
+        "response": 33,
+        "switches": 4
+      }
+    },
+    {
+      "q": 29,
+      "rr": {
+        "wait": 44,
+        "response": 44,
+        "switches": 4
+      },
+      "priorityRr": {
+        "wait": 33,
+        "response": 33,
+        "switches": 4
+      }
+    },
+    {
+      "q": 30,
+      "rr": {
+        "wait": 44,
+        "response": 44,
+        "switches": 4
+      },
+      "priorityRr": {
+        "wait": 33,
+        "response": 33,
+        "switches": 4
+      }
+    }
+  ],
+  "starvation": {
+    "fcfs": 0,
+    "prio": 60,
+    "prrr": 60
+  }
+}

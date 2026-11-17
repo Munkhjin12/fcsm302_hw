@@ -1,8 +1,14 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "list.h"
 
 void insert(struct node **head, Task *task) {
-    struct node *n = malloc(sizeof *n), *p;
+    struct node *n = task ? malloc(sizeof *n) : NULL;
+    if (!n) {
+        fputs("Error: cannot register or queue task.\n", stderr);
+        exit(EXIT_FAILURE);
+    }
+    struct node *p;
     n->task = task; n->next = NULL;
     if (!*head) { *head = n; return; }
     for (p = *head; p->next; p = p->next) ;
